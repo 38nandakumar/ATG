@@ -1,4 +1,3 @@
-// தேவையான Discord.js import செய்யல்
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const fs = require('fs');
 require('dotenv').config(); 
