@@ -1,18 +1,21 @@
+// Discord.js import
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const fs = require('fs');
-require('dotenv').config(); // BOT_TOKEN saved in .env
 
+// Bot instance உருவாக்கல்
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildVoiceStates,
         GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.MessageContent
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildVoiceStates
     ]
 });
 
+// Commands collection
 client.commands = new Collection();
 
+// commands folder-ல் உள்ள commands load செய்யல்
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 
 for (const file of commandFiles) {
@@ -20,6 +23,7 @@ for (const file of commandFiles) {
     client.commands.set(command.data.name, command);
 }
 
+// interaction listener
 client.on('interactionCreate', async interaction => {
     if (!interaction.isCommand()) return;
 
@@ -35,9 +39,11 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
+// ready event
 client.once('ready', () => {
     console.log(`${client.user.tag} is online!`);
 });
 
+// Bot login using GitHub Secrets
 client.login(process.env.BOT_TOKEN);
 
