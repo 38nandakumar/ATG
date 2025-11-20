@@ -1,16 +1,17 @@
-name: Discord Bot
+name: Run Discord Bot
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
-    env:
-      TOKEN: ${{ secrets.TOKEN }}
 
     steps:
-      - name: Checkout code
+      - name: Checkout Repo
         uses: actions/checkout@v3
 
       - name: Setup Node.js
@@ -18,8 +19,10 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install packages
+      - name: Install Dependencies
         run: npm install
 
-      - name: Start bot
+      - name: Run Bot
+        env:
+          TOKEN: ${{ secrets.TOKEN }}
         run: node index.js
