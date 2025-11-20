@@ -1,9 +1,8 @@
-const { Client, GatewayIntentBits, Partials, Collection, SlashCommandBuilder, Events } = require("discord.js");
+const { Client, GatewayIntentBits, Partials, SlashCommandBuilder, Events } = require("discord.js");
 const { DisTube } = require("distube");
 const { YtDlpPlugin } = require("@distube/yt-dlp");
-const { token } = require("./config.json");
 
-// Create client
+// Client setup
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -17,7 +16,7 @@ const client = new Client({
 const commands = [
     new SlashCommandBuilder()
         .setName("play")
-        .setDescription("Play music from YouTube")
+        .setDescription("Play a song from YouTube")
         .addStringOption(option =>
             option.setName("song")
                 .setDescription("Song name or YouTube link")
@@ -28,21 +27,21 @@ const commands = [
         .setDescription("Stop the music"),
     new SlashCommandBuilder()
         .setName("skip")
-        .setDescription("Skip the current song"),
+        .setDescription("Skip current song"),
     new SlashCommandBuilder()
         .setName("pause")
         .setDescription("Pause the music"),
     new SlashCommandBuilder()
         .setName("resume")
-        .setDescription("Resume the music")
+        .setDescription("Resume the song")
 ].map(cmd => cmd.toJSON());
 
-// Register slash commands on ready
+// When bot is ready
 client.once("clientReady", async () => {
     console.log(`Bot Logged in as ${client.user.tag}`);
 
     await client.application.commands.set(commands);
-    console.log("Slash commands registered ✔️");
+    console.log("Slash commands registered successfully ✔️");
 });
 
 // Distube setup
@@ -53,43 +52,41 @@ const distube = new DisTube(client, {
     plugins: [new YtDlpPlugin()]
 });
 
-// Slash command handler
+// Command handler
 client.on(Events.InteractionCreate, async interaction => {
     if (!interaction.isChatInputCommand()) return;
 
-    const { commandName } = interaction;
-
-    if (commandName === "play") {
+    if (interaction.commandName === "play") {
         const song = interaction.options.getString("song");
 
         if (!interaction.member.voice.channel) {
             return interaction.reply("🎧 முதலில் Voice Channel Join ஆகவும்!");
         }
 
-        await interaction.reply(`🎶 Searching: **${song}**`);
+        await interaction.reply(`🎶 Searching for **${song}**...`);
 
         distube.play(interaction.member.voice.channel, song, {
-            textChannel: interaction.channel,
-            member: interaction.member
+            member: interaction.member,
+            textChannel: interaction.channel
         });
     }
 
-    if (commandName === "stop") {
+    if (interaction.commandName === "stop") {
         distube.stop(interaction.guild.id);
         interaction.reply("⛔ Music stopped!");
     }
 
-    if (commandName === "skip") {
+    if (interaction.commandName === "skip") {
         distube.skip(interaction.guild.id);
         interaction.reply("⏭ Song skipped!");
     }
 
-    if (commandName === "pause") {
+    if (interaction.commandName === "pause") {
         distube.pause(interaction.guild.id);
         interaction.reply("⏸ Music paused!");
     }
 
-    if (commandName === "resume") {
+    if (interaction.commandName === "resume") {
         distube.resume(interaction.guild.id);
         interaction.reply("▶ Music resumed!");
     }
@@ -98,16 +95,16 @@ client.on(Events.InteractionCreate, async interaction => {
 // Distube events
 distube
     .on("playSong", (queue, song) => {
-        queue.textChannel.send(`🎵 Playing: **${song.name}**`);
+        queue.textChannel.send(`🎵 Now Playing: **${song.name}**`);
     })
     .on("addSong", (queue, song) => {
         queue.textChannel.send(`➕ Added: **${song.name}**`);
     })
-    .on("error", (channel, error) => {
-        channel.send("❌ Error: " + error.message);
-        console.error(error);
+    .on("error", (channel, err) => {
+        channel.send("❌ Error: " + err.message);
+        console.error(err);
     });
 
-// Login bot
-client.login(token);
+// LOGIN USING GITHUB SECRET TOKEN
+client.login(process.env.TOKEN);
 
