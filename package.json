@@ -1,11 +1,14 @@
-
 {
-  "name": "ATG",
+  "name": "atg-music-bot",
   "version": "1.0.0",
+  "description": "ATG Discord Music Bot",
   "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
   "dependencies": {
-  "discord.js": "^14.15.0",
-  "distube": "^5.0.0",
-  "@distube/yt-dlp": "^1.0.0"}
+    "discord.js": "^14.15.0",
+    "distube": "^5.0.0",
+    "@distube/yt-dlp": "^1.0.0"
   }
 }
