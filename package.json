@@ -6,6 +6,6 @@
   "dependencies": {
     "discord.js": "^14.0.0",
     "distube": "^4.0.0",
-    "@distube/spotify": "^4.0.0"
+    "@distube/spotify": "^3.0.0"
   }
 }
