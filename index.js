@@ -1,50 +1,62 @@
-const { Client, GatewayIntentBits } = require("discord.js");
+const fs = require("fs");
+const path = require("path");
+const {
+  Client,
+  Collection,
+  GatewayIntentBits,
+  Partials
+} = require("discord.js");
+
 const { DisTube } = require("distube");
 const { YtDlpPlugin } = require("@distube/yt-dlp");
 
+// Create Client
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildVoiceStates,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent
-  ]
+    GatewayIntentBits.GuildMessages
+  ],
+  partials: [Partials.Channel]
 });
 
+// Distube Player
 client.distube = new DisTube(client, {
   plugins: [new YtDlpPlugin()]
 });
 
-client.on("ready", () => {
+// Slash Commands Collection
+client.commands = new Collection();
+
+// Auto Load Commands
+const commandsPath = path.join(__dirname, "commands");
+const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith(".js"));
+
+for (const file of commandFiles) {
+  const filePath = path.join(commandsPath, file);
+  const command = require(filePath);
+  client.commands.set(command.data.name, command);
+}
+
+// When Bot is Online
+client.once("ready", () => {
   console.log(`Bot Online as ${client.user.tag}`);
 });
 
-client.on("messageCreate", async message => {
-  if (!message.content.startsWith("!")) return;
+// Slash Command Handler
+client.on("interactionCreate", async interaction => {
+  if (!interaction.isChatInputCommand()) return;
 
-  const args = message.content.slice(1).trim().split(/ +/);
-  const cmd = args.shift().toLowerCase();
+  const command = client.commands.get(interaction.commandName);
+  if (!command) return;
 
-  if (cmd === "play") {
-    if (!message.member.voice.channel)
-      return message.reply("❌ Voice channel join பண்ணு bro!");
-
-    client.distube.play(message.member.voice.channel, args.join(" "), {
-      message
-    });
-
-    message.reply("🎶 Playing your song...");
-  }
-
-  if (cmd === "stop") {
-    client.distube.stop(message);
-    message.reply("⛔ Music stopped!");
-  }
-
-  if (cmd === "skip") {
-    client.distube.skip(message);
-    message.reply("⏭ Song skipped!");
+  try {
+    await command.execute(interaction, client);
+  } catch (error) {
+    console.error(error);
+    await interaction.reply({ content: "⚠ Error occurred!", ephemeral: true });
   }
 });
 
 client.login(process.env.TOKEN);
+
