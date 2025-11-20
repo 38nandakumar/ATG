@@ -1,4 +1,2 @@
-data: new SlashCommandBuilder()
-    .setName('play')              // ← இது title (command name)
-    .setDescription('song play')  // ← இது description
+
 
