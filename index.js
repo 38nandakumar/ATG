@@ -1,58 +1,61 @@
-const { Client, Collection, GatewayIntentBits } = require("discord.js");
+const { Client, GatewayIntentBits } = require("discord.js");
 const { DisTube } = require("distube");
 const { YtDlpPlugin } = require("@distube/yt-dlp");
-const fs = require("fs");
-require("dotenv").config();
 
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildVoiceStates,
-    GatewayIntentBits.GuildMessages
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent
   ],
 });
 
-// Slash command collection
-client.commands = new Collection();
-
-// Load commands from commands folder
-const commandFiles = fs.readdirSync("./commands").filter(file => file.endsWith(".js"));
-for (const file of commandFiles) {
-  const command = require(`./commands/${file}`);
-  client.commands.set(command.data.name, command);
-}
-
-// DisTube Setup
-client.distube = new DisTube(client, {
-  emitNewSongOnly: true,
-  leaveOnStop: false,
-  leaveOnFinish: true,
-  plugins: [
-    new YtDlpPlugin()
-  ],
+const distube = new DisTube(client, {
+  plugins: [new YtDlpPlugin()]
 });
 
-// Ready Event
-client.once("ready", () => {
-  console.log(`🚀 Logged in as ${client.user.tag}`);
+client.on("ready", () => {
+  console.log(`Bot Logged in as ${client.user.tag}`);
 });
 
-// Interaction Handler
-client.on("interactionCreate", async (interaction) => {
-  if (!interaction.isChatInputCommand()) return;
+client.on("messageCreate", async (message) => {
+  if (!message.guild) return;
 
-  const command = client.commands.get(interaction.commandName);
+  const prefix = "!";
 
-  if (!command) return;
+  if (!message.content.startsWith(prefix)) return;
 
-  try {
-    await command.execute(interaction, client);
-  } catch (err) {
-    console.log(err);
-    await interaction.reply({ content: "❌ Error executing command!", ephemeral: true });
+  const args = message.content.slice(prefix.length).split(" ");
+  const cmd = args.shift();
+
+  if (cmd === "play") {
+    if (!args[0]) return message.reply("Song URL or name kudu!");
+    distube.play(message.member.voice.channel, args.join(" "), {
+      textChannel: message.channel,
+      member: message.member
+    });
+  }
+
+  if (cmd === "stop") {
+    distube.stop(message);
+    message.channel.send("Music stopped!");
+  }
+
+  if (cmd === "skip") {
+    distube.skip(message);
+    message.channel.send("Skipped!");
   }
 });
 
-// Login
+// DisTube events
+distube
+  .on("playSong", (queue, song) =>
+    queue.textChannel.send(`Playing: **${song.name}**`)
+  )
+  .on("addSong", (queue, song) =>
+    queue.textChannel.send(`Added: **${song.name}**`)
+  );
+
 client.login(process.env.TOKEN);
 
