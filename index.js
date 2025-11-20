@@ -1,7 +1,7 @@
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const fs = require('fs');
-require('dotenv').config(); 
-்
+require('dotenv').config(); // BOT_TOKEN saved in .env
+
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -11,9 +11,7 @@ const client = new Client({
     ]
 });
 
-
 client.commands = new Collection();
-
 
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 
@@ -21,7 +19,6 @@ for (const file of commandFiles) {
     const command = require(`./commands/${file}`);
     client.commands.set(command.data.name, command);
 }
-
 
 client.on('interactionCreate', async interaction => {
     if (!interaction.isCommand()) return;
@@ -34,15 +31,13 @@ client.on('interactionCreate', async interaction => {
         await command.execute(interaction);
     } catch (error) {
         console.error(error);
-        await interaction.reply({ content: 'பிழை ஏற்பட்டது!', ephemeral: true });
+        await interaction.reply({ content: 'Error occurred!', ephemeral: true });
     }
 });
 
-
 client.once('ready', () => {
-    console.log(`${client.user.tag} ஆனது online ஆனது!`);
+    console.log(`${client.user.tag} is online!`);
 });
 
-
-client.login(process.env.MTQyNjI0NzA0MjczMjEzMDQ2Ng.GquWbk.1GshRDRw0Bt-WTKeECq1BvxBxa5SqosP3qKx5k); 
+client.login(process.env.BOT_TOKEN);
 
